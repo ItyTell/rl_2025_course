@@ -168,12 +168,8 @@ class MountainCarDiscreteMDP(object):
                 idx_1 += 1
             
             idx_2 = 0
-            delta = -1
-            old_policy = policy.copy()
 
             while idx_2 < max_iter_2:
-
-                delta = 0
 
                 for s_id, s in enumerate(self.S):
 
@@ -201,10 +197,10 @@ class MountainCarDiscreteMDP(object):
                     policy[s_id] = best_a
 
             
-                delta = np.abs(np.array(policy) - np.array(old_policy)).sum()
                 idx_2 += 1
 
             idx += 1
+        self.p = policy
         print("\nDone")
             
     
@@ -223,7 +219,9 @@ class MountainCarDiscreteMDP(object):
 
         # get new v value and update
 
-        a = np.argmax(self.qa_table[s_id])
+        #a = np.argmax(self.qa_table[s_id])
+
+        a = self.p[s_id]
 
         return a
 
@@ -293,8 +291,8 @@ class MountainCarDiscreteMDP(object):
 
 if __name__ == '__main__':
 
-    mdp = MountainCarDiscreteMDP(x_bin=20, vel_bin=20, trials_per_state_action=100, gamma=0.99, complete_reward=200)
+    mdp = MountainCarDiscreteMDP(x_bin=20, vel_bin=20, trials_per_state_action=100, gamma=0.99, complete_reward=100)
 
-    mdp.policy_iteration()
+    mdp.policy_iteration(max_iter=25, max_iter_2=50)
 
     mdp.solve(max_steps=200, record=False, episodes=3)
