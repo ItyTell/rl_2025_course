@@ -120,7 +120,7 @@ class MountainCarDiscreteMDP(object):
 
     
 
-    def policy_iteration(self, theta_1=1e-3, theta_2=1e-3, max_iter=20, max_iter_2=20):
+    def policy_iteration(self, max_iter=10, max_iter_2=10):
 
         '''
 
