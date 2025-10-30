@@ -293,6 +293,6 @@ if __name__ == '__main__':
 
     mdp = MountainCarDiscreteMDP(x_bin=20, vel_bin=20, trials_per_state_action=100, gamma=0.99, complete_reward=100)
 
-    mdp.policy_iteration(max_iter=25, max_iter_2=50)
+    mdp.policy_iteration(max_iter=20, max_iter_2=20)
 
     mdp.solve(max_steps=200, record=False, episodes=3)
