@@ -43,7 +43,7 @@ gamma = gamma
 
 complete_reward = complete_reward
 
-episodes = int(100000 / 500 * 5)
+episodes = int(100000 / 500)
 epsilon = 0.001
 
 
@@ -61,9 +61,11 @@ def get_state(x, v):
 
     return S[idx], idx
 
- 
 
 
+
+
+"""
 env= gym.make('MountainCar-v0', render_mode='human')
 
 for i in range(1):
@@ -88,6 +90,8 @@ for i in range(1):
         next_state, reward, terminated, truncated, _ = env.step(action)
         done = terminated or truncated
 
+        reward = x**2 + v**2 - 2 + 10 * done
+
         history.append((s_idx, action, reward))
         state = next_state
         env.render()
@@ -103,7 +107,12 @@ for i in range(1):
             S[s]['a'][a]['reward'] += (G - S[s]['a'][a]['reward']) / S[s]['a'][a]['quon']
             visited.add((s, a))
 
-env.close()
+env.close() 
+"""
+
+
+
+
 
 
 
@@ -116,15 +125,45 @@ for i in tqdm(range(episodes), desc='Rolling dice...'):
     history = []
     done = False
     iter = 0
+    prev_reward = 0
+    start_iter = 5400
+    x0, v0 = state[0] + 0.5, state[1]
 
-    while not done and iter < 1000:
-        if random.random() < epsilon:
-            a = random.choice(A)
-        else:
+    max_pos = state[0]
+
+    while not done and iter < start_iter:
+        flag = False
+        for action1 in A:
+            if ac['a'][action1]['quon'] == 0:
+                a = action1
+                flag = True
+                break
+        #flag = False
+        if not flag:
             a = np.argmax([ac['a'][action]['reward'] for action in A])
         
         next_state, reward, done, _, _ = env.step(a)
         _, next_s = get_state(next_state[0], next_state[1])
+
+        x, v = next_state[0] + 0.5, next_state[1]
+
+
+        #reward = abs(x) * v * (a- 1) * 10 + abs(v) * 5
+
+        #reward = x** 2 + v**2 - 2
+
+        #reward = 1 + np.sin(3 * x) + abs(v)
+
+        #reward = 10 * abs(x) + 2 * v**2
+        #reward = 10 * abs(x) + 2 * v**2 if x < 0 else 10 * x * x * x + x * x + 3 * v* v * v + v * v + 5
+        """if x >= 0 and a == 2 and v > 0.5: 
+            reward = v**2 + x* 20 - 3
+        else:
+            reward = v**2 + x*10 - 5
+"""
+        #reward *=  1.5 if x > 0.5 else 1
+        #reward = abs(x - x0) / 2 ** 0.5 + v * v - v0 * v0
+        x0, v0 = next_state[0] + 0.5, next_state[1]
 
         history.append((s, a, reward))
         s = next_s
@@ -144,13 +183,15 @@ for i in tqdm(range(episodes), desc='Rolling dice...'):
         S[s]['a'][a]['reward'] += (G - S[s]['a'][a]['reward']) / S[s]['a'][a]['quon']
         visited.add((s, a))
 
+    start_iter += 100
+
 env.close()
 
 
 # real test 
 
 
-def solve(max_steps=300, episodes=1):
+def solve(max_steps=500, episodes=1):
 
     env = gym.make('MountainCar-v0', render_mode='human')
 
