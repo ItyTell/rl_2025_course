@@ -2,29 +2,35 @@ import gymnasium as gym
 import ale_py
 from gymnasium.utils.play import play
 import matplotlib.pyplot as plt
+import numpy as np
  	
 
+
 def find_rocket(obs):
-    # Example function to find the rocket in the observation
-    # This is a placeholder implementation
     rocket_color = [200, 72, 72]  # RGB color of the rocket
-    mask = (obs[:, :, 0] == rocket_color[0]) & (obs[:, :, 1] == rocket_color[1]) & (obs[:, :, 2] == rocket_color[2])
-    return mask
-
-def find_ball(obs):
-    # Example function to find the ball in the observation
-    # This is a placeholder implementation
-    ball_color = [236, 236, 236]  # RGB color of the ball
-    mask = (obs[:, :, 0] == ball_color[0]) & (obs[:, :, 1] == ball_color[1]) & (obs[:, :, 2] == ball_color[2])
-    return mask
+    hand_raws = obs[-19, :,:]
+    # match the color
+    return np.where((hand_raws == rocket_color).all(1))[0][0]
 
 
+def find_ball(obs_0, obs):
+    """
+        obs_0: previous observation
+       obs: current observation
+       #does not take into account bricks being hit
+    """
+    diff = np.maximum(0, obs.astype(np.int16) - obs_0.astype(np.int16))
+    diff_sum = np.sum(diff, axis=2)
+    x_indices, y_indices = np.where(diff_sum > 0)
+    return x_indices[0], y_indices[0]
 
 
 gym.register_envs(ale_py)
-env = gym.make("ALE/Breakout-v5", render_mode="rgb_array")
+#env = gym.make("ALE/Breakout-v5", render_mode="rgb_array")
+env = gym.make("BreakoutNoFrameskip-v0", render_mode="rgb_array")
 
-#play(env)
+
+play(env)
 
 
 obs, info = env.reset()

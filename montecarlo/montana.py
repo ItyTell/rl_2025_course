@@ -150,14 +150,14 @@ for i in tqdm(range(episodes), desc='Rolling dice...'):
 
         #reward = abs(x) * v * (a- 1) * 10 + abs(v) * 5
 
-        #reward = x** 2 + v**2 - 2
+        #reward = x ** 2 + v**2 - 2
 
         #reward = 1 + np.sin(3 * x) + abs(v)
 
-        #reward = 10 * abs(x) + 2 * v**2
+        reward = 10 * abs(x) + 2 * v**2
         #reward = 10 * abs(x) + 2 * v**2 if x < 0 else 10 * x * x * x + x * x + 3 * v* v * v + v * v + 5
         """if x >= 0 and a == 2 and v > 0.5: 
-            reward = v**2 + x* 20 - 3
+            reward = v**2 + x * 20 - 3
         else:
             reward = v**2 + x*10 - 5
 """
