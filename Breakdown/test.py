@@ -22,6 +22,8 @@ def find_ball(obs_0, obs):
     diff = np.maximum(0, obs.astype(np.int16) - obs_0.astype(np.int16))
     diff_sum = np.sum(diff, axis=2)
     x_indices, y_indices = np.where(diff_sum > 0)
+    if len(x_indices) == 0:
+        return None, None
     return x_indices[0], y_indices[0]
 
 
