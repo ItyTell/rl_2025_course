@@ -1,6 +1,7 @@
 
 import torch
 import torch.nn as nn
+import os
 
 
 class BreakoutInator(nn.Module):
@@ -20,8 +21,6 @@ class BreakoutInator(nn.Module):
 
 
     def forward(self, x):
-        x = torch.tensor(x)
-
         action_val = self.relu(self.ac_fc1(x))
         action_val = self.relu(self.ac_fc2(action_val))
         action_val = self.ac_fc3(action_val)
@@ -37,10 +36,12 @@ class BreakoutInator(nn.Module):
         return output
     
 
-    def save_model(self, path="models/breakout_inator.pth"):
+    def save_model(self, path="models/breakout_inator.pt"):
+        if not os.path.exists("models"):
+            os.makedirs('models')
         torch.save(self.state_dict(), path)
 
-    def load_model(self, path="models/breakout_inator.pth"):
+    def load_model(self, path="models/breakout_inator.pt"):
         try:
             self.load_state_dict(torch.load(path))
             print("Model loaded successfully.")

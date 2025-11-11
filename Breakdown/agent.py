@@ -4,6 +4,7 @@ import copy
 import torch.nn.functional as F
 from plot import LivePlot
 import numpy as np
+import time
 
 
 class ReplayMemory:
@@ -25,10 +26,23 @@ class ReplayMemory:
     def sample(self, batch_size=32):
         assert self.can_sample(batch_size), "Not enough elements in memory to sample"
 
-        batch = random.sample(self.memory, batch_size)
-        batch = zip(*batch)
+        batch = random.sample(self.memory, batch_size) 
 
-        return [ torch.cat(items).to(self.device) for items in batch ]
+
+        state_b, action_b, reward_b, next_state_b, done_b = zip(*batch)
+
+        # Stack 1D tensors (state, next_state) into [batch_size, 113]
+        state_b = torch.stack(state_b).to(self.device)
+        next_state_b = torch.stack(next_state_b).to(self.device)
+
+        # Concatenate 2D tensors (action, reward, done) into [batch_size, 1]
+        action_b = torch.cat(action_b).to(self.device)
+        reward_b = torch.cat(reward_b).to(self.device)
+        done_b = torch.cat(done_b).to(self.device)
+
+        return state_b, action_b, reward_b, next_state_b, done_b
+
+        #return [ torch.stack(items).to(self.device) for items in batch ]
     
     def can_sample(self, batch_size):
         return len(self.memory) >= batch_size * 10
@@ -64,6 +78,9 @@ class Agent:
         if random.random() < self.epsilon:
             return torch.randint(self.nb_actions, (1, 1))
         else:
+            # Add a batch dimension: [113] -> [1, 113]
+            state = state.unsqueeze(0).to(self.device) 
+            
             av = self.model(state).detach()
             return torch.argmax(av, dim=1, keepdim=True)
     
@@ -87,8 +104,9 @@ class Agent:
                     qsa_b = self.model(state_b).gather(1, action_b)
                     next_qsa_b = self.target_model(next_state_b)
                     next_qsa_b = torch.max(next_qsa_b, dim=1, keepdim=True)[0]
-                    target_b = reward_b + ~done_b * self.gamma * next_qsa_b
-                    loss = F.nse_loss(qsa_b, target_b)
+                    #target_b = reward_b + ~done_b * self.gamma * next_qsa_b
+                    target_b = reward_b + (1.0 - done_b) * self.gamma * next_qsa_b
+                    loss = F.mse_loss(qsa_b, target_b)
                     self.model.zero_grad()
                     loss.backward()
                     self.optimizer.step()
@@ -102,7 +120,7 @@ class Agent:
                 self.epsilon = self.epsilon * self.epsilon_decay
 
             if epoch % 10 == 0:
-                self.mdoel.save_the_model()
+                self.model.save_model()
                 print(" ")
                 average_returns = np.mean(stats["Returns"][-100:])
 
@@ -112,16 +130,33 @@ class Agent:
                 if (len(stats["Returns"]) > 100):
                     print(f"Epoch: {epoch} - Average Return {average_returns} - Epsilon: {self.epsilon}")
                 else:
-                    print(f"Epoch: {epoch} - Average Return {np.mean(stats["Returns"][-1:])} - Epsilon: {self.epsilon}")
+                    print(f"Epoch: {epoch} - Average Return {np.mean(stats['Returns'][-1:])} - Epsilon: {self.epsilon}")
             
             if epoch % 100 == 0:
-                self.target_model.load_state.dict(self.model.state_dict())
+                self.target_model.load_state_dict(self.model.state_dict())
                 plotter.update_plot(stats)
 
             if epoch % 1000 == 0:
-                self.model.save_the_model(f"models/model_iteration{epoch}.pt")
+                self.model.save_model(f"models/model_iteration{epoch}.pt")
         
         return stats
+
+    
+    def test(self, env):
+
+        for epoch in range(1, 3):
+            state = env.reset()
+
+            done = False 
+
+            for _ in range(1000):
+
+                time.sleep(0.01)
+
+                action = self.get_action(state)
+                state, reward, done, info = env.step(action)
+                if done:
+                    break
 
 
 
